@@ -2,12 +2,13 @@ import cv2
 import numpy as np
 from cvzone.ColorModule import ColorFinder
 
-cap = cv2.VideoCapture('video2.mp4')
+cap = cv2.VideoCapture('video3.mp4')
 # cap = cv2.VideoCapture(0)
 frameCounter = 0 
 
 colorFinder = ColorFinder(True) # To Decide HSV values of objects "True"
-cornerPoints = [[92,27],[11,545],[457,87],[376,600]]
+# cornerPoints = [[92,27],[11,545],[457,87],[376,600]]  #video2.py
+cornerPoints = [[19,667],[39,136],[385,678],[407,157]]  #video3.py
 
 def getBoard(img):
     width, height = int(297*2.5),int(210*2.5)  # A4 paper size will be changed for the board size (height = 600 mm)
@@ -26,14 +27,17 @@ while True:
         cap.set(cv2.CAP_PROP_POS_FRAMES,0)
 
     success, img = cap.read()
+    img = cv2.resize(img, (0, 0), fx = 0.5, fy = 0.5)
     imgBoard = getBoard(img)
 
-    imgColor, mask = colorFinder.update(imgBoard)
+    imgd = cv2.imread('img.png')
 
-    
+    imgColor, mask = colorFinder.update(imgd)
 
     cv2.imshow("ImageColor",imgColor)
     # cv2.imshow("Image",img)
+
+    # cv2.imwrite("img.png",imgColor)
     # mm=cv2.imread('img.png')
     # cv2.imshow("hee",mm)
     
