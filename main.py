@@ -20,7 +20,7 @@ colorFinder = ColorFinder(False) # To Decide HSV values of objects "True"
 # # hsvObstacleVals = {'hmin': 0, 'smin': 25, 'vmin': 66, 'hmax': 179, 'smax': 50, 'vmax': 160}  # Black Obstacles #video1.py
 # hsvObstacleVals = {'hmin': 0, 'smin': 0, 'vmin': 0, 'hmax': 179, 'smax': 18, 'vmax': 124}    # Black Obstacles #video2.py
 
-### VIDEO3 HSV ###
+### VIDEO 3&5 HSV ###
 hsvTargetVals = {'hmin': 0, 'smin': 182, 'vmin': 0, 'hmax': 25, 'smax': 255, 'vmax': 255}
 hsvPuck1Vals = {'hmin': 28, 'smin': 0, 'vmin': 0, 'hmax': 50, 'smax': 255, 'vmax': 255}  # YELLOW
 hsvPuck2Vals = {'hmin': 56, 'smin': 0, 'vmin': 0, 'hmax': 112, 'smax': 255, 'vmax': 255} # BLUE
@@ -88,8 +88,19 @@ def getFirstFrame(imgBoard):
     
     return maskFirstFrame
 
+def pausePuckisOnBoard():
+    global myTurn,  maskPausePuck
+    if maskPausePuck[PausePuck[1]][PausePuck[0]] == 0:
+        PauseFlag = False
+    else:
+        PauseFlag = True
+    # print(PausePuck[0],PausePuck[1])
+    # print(maskPausePuck[PausePuck[1]][PausePuck[0]])
+
+    return PauseFlag
+
 def defineMyTurn(imgBoard):          # EDIT THIS PART FOR THE PUCK NEXT TO BOARD
-    global myTurn, PausePuck
+    global myTurn, PausePuck, maskPausePuck
     maskPuck1 = createHsvMask(imgBoard, hsvPuck1Vals)
     maskPuck2 = createHsvMask(imgBoard, hsvPuck2Vals)
     contPuck1, numberofPunks1 =  detectContour(maskPuck1)
@@ -97,19 +108,21 @@ def defineMyTurn(imgBoard):          # EDIT THIS PART FOR THE PUCK NEXT TO BOARD
     
     if numberofPunks1 > numberofPunks2:
         myTurn = 1
-        px, py, pr = findCenterContour(contPuck1[0])
+        px, py, _ = findCenterContour(contPuck1[0])
+        maskPausePuck  = maskPuck1
         print("my punk:",str(numberofPunks1),"opponent punk:",str(numberofPunks2))
         print(" We are starting!")
     else:
         myTurn = 0
-        px, py, pr = findCenterContour(contPuck2[0])
+        px, py, _ = findCenterContour(contPuck2[0])
+        maskPausePuck  = maskPuck2
         print(" Opponent is starting!")
-    PausePuck = [px, py, pr]  # If pausepuck moves, PAUSE the game !!!!
+    PausePuck = [px, py]  # If pausepuck moves, PAUSE the game !!!!
      
 motionDetected = 0
 START = 1
 targetCenterRadius = []
-        
+     
 while True:
     frameCounter += 1
     if frameCounter == cap.get(cv2.CAP_PROP_FRAME_COUNT):
@@ -142,7 +155,6 @@ while True:
         maskFirstFrame = getFirstFrame(imgBoard)
         if threshold.sum() > 150000:
             print("---motion is detected")
-
             # "wait until motion stops"
             motionDetected = 1
  
@@ -154,7 +166,7 @@ while True:
         cv2.imshow("threshold",threshold)
         # print(threshold.sum())
 
-    if myTurn:
+    elif myTurn:
         obstacleEdgePoints = []
         Puck1CenterRadius  = []
         Puck2CenterRadius  = []
@@ -185,6 +197,8 @@ while True:
         #...
         #...
         #...
+    print(pausePuckisOnBoard())
+    # cv2.imshow("maskPausePuck",maskPausePuck)
 
     # print("Number of Contours Puck1 = " + str(numberofPunks1))
     # print("Number of Contours Puck2 = " + str(numberofPunks2))

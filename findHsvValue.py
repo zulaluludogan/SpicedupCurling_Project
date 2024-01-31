@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from cvzone.ColorModule import ColorFinder
 
-cap = cv2.VideoCapture('video3.mp4')
+cap = cv2.VideoCapture('video5.mp4')
 # cap = cv2.VideoCapture(0)
 frameCounter = 0 
 
@@ -32,7 +32,7 @@ while True:
 
     imgd = cv2.imread('img.png')
 
-    imgColor, mask = colorFinder.update(imgd)
+    imgColor, mask = colorFinder.update(imgBoard)
 
     cv2.imshow("ImageColor",imgColor)
     # cv2.imshow("Image",img)
