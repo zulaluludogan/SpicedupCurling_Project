@@ -1,0 +1,16 @@
+### VIDEO1&2 HSV ###
+# hsvTargetVals = {'hmin': 156, 'smin': 67, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 255}  # Red Target
+# hsvPuck1Vals = {'hmin': 26, 'smin': 63, 'vmin': 0, 'hmax': 58, 'smax': 255, 'vmax': 255}     # Yellow Puck
+# hsvPuck2Vals = {'hmin': 56, 'smin': 97, 'vmin': 0, 'hmax': 111, 'smax': 255, 'vmax': 255}    # Blue Puck
+# # hsvObstacleVals = {'hmin': 0, 'smin': 25, 'vmin': 66, 'hmax': 179, 'smax': 50, 'vmax': 160}  # Black Obstacles #video1.py
+# hsvObstacleVals = {'hmin': 0, 'smin': 0, 'vmin': 0, 'hmax': 179, 'smax': 18, 'vmax': 124}    # Black Obstacles #video2.py
+
+
+### BOARD HSV ###
+# hsvTargetVals = {'hmin': 0, 'smin': 66, 'vmin': 112, 'hmax': 30, 'smax': 255, 'vmax': 255}
+# hsvPuck1Vals = {'hmin': 27, 'smin': 78, 'vmin': 0, 'hmax': 50, 'smax': 255, 'vmax': 255} ##YELLOW
+# hsvPuck2Vals = {'hmin': 110, 'smin': 64, 'vmin': 60, 'hmax': 126, 'smax': 99, 'vmax': 255} #PURPLE
+# hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 98}
+
+
+cornerPoints = [[58,129],[579,121],[62,448],[590,430]]  # board

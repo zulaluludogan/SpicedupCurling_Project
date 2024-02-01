@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(2)
 
 while True:
     read_ok, img = cap.read()
@@ -21,8 +21,6 @@ while True:
     
     lower_red = np.array([0, 50, 50])
     upper_red = np.array([10, 255, 255])
-
-    
 
     try:
         for i in circles[0,:]:

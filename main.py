@@ -3,35 +3,32 @@ import time
 import numpy as np
 from cvzone.ColorModule import ColorFinder
 
+# cap = cv2.VideoCapture('video5.mp4')
+cap = cv2.VideoCapture(2)
 
-cap = cv2.VideoCapture('video5.mp4')
-frameCounter = 0 
-
-# cornerPoints = [[418,142],[418,683],[21,76],[24,752]]  # Calibrate acc board
 # cornerPoints = [[92,27],[11,545],[457,87],[376,600]] # video2.py coordinates
 cornerPoints = [[19,667],[39,136],[385,678],[407,157]] # video3.py
 
-colorFinder = ColorFinder(False) # To Decide HSV values of objects "True"
-
-### VIDEO1&2 HSV ###
-# hsvTargetVals = {'hmin': 156, 'smin': 67, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 255}  # Red Target
-# hsvPuck1Vals = {'hmin': 26, 'smin': 63, 'vmin': 0, 'hmax': 58, 'smax': 255, 'vmax': 255}     # Yellow Puck
-# hsvPuck2Vals = {'hmin': 56, 'smin': 97, 'vmin': 0, 'hmax': 111, 'smax': 255, 'vmax': 255}    # Blue Puck
-# # hsvObstacleVals = {'hmin': 0, 'smin': 25, 'vmin': 66, 'hmax': 179, 'smax': 50, 'vmax': 160}  # Black Obstacles #video1.py
-# hsvObstacleVals = {'hmin': 0, 'smin': 0, 'vmin': 0, 'hmax': 179, 'smax': 18, 'vmax': 124}    # Black Obstacles #video2.py
-
-### VIDEO 3&5 HSV ###
+# ### VIDEO 3&5 HSV ###
 hsvTargetVals = {'hmin': 0, 'smin': 182, 'vmin': 0, 'hmax': 25, 'smax': 255, 'vmax': 255}
 hsvPuck1Vals = {'hmin': 28, 'smin': 0, 'vmin': 0, 'hmax': 50, 'smax': 255, 'vmax': 255}  # YELLOW
 hsvPuck2Vals = {'hmin': 56, 'smin': 0, 'vmin': 0, 'hmax': 112, 'smax': 255, 'vmax': 255} # BLUE
 hsvObstacleVals = {'hmin': 0, 'smin': 25, 'vmin': 0, 'hmax': 179, 'smax': 117, 'vmax': 94}
 
+## BOARD HSV ###
+# hsvTargetVals = {'hmin': 0, 'smin': 66, 'vmin': 112, 'hmax': 30, 'smax': 255, 'vmax': 255}
+# hsvPuck1Vals = {'hmin': 27, 'smin': 78, 'vmin': 0, 'hmax': 50, 'smax': 255, 'vmax': 255} ##YELLOW
+# hsvPuck2Vals = {'hmin': 110, 'smin': 64, 'vmin': 60, 'hmax': 126, 'smax': 99, 'vmax': 255} #PURPLE
+# hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 98}
+
+
 ###### DIP FUNCTIONS
 
 def getBoard(img):
-    global scale 
-    scale = 2.5
-    width, height = int(297*scale),int(210*scale)  # A4 paper size will be changed for the board size (height = 600 mm)
+    global scale
+    scale = 1
+    bw, bh = 1110, 660
+    width, height = int(bw*scale),int(bh*scale)   # A4 paper size will be changed for the board size (height = 600 mm)
 
     pts1 =  np.float32(cornerPoints)
     pts2 =  np.float32([[0,0],[width,0],[0,height],[width,height]])
@@ -73,10 +70,16 @@ def findEdgePointsObst(cnt):
 
     return box
 
-def getPointArrays(contlist,pointlist):
-    for cont in contlist:
-        cX, cY, r = findCenterContour(cont)
-        pointlist.append([cX, cY, r])
+def getPointArrays(contlist,pointlist, shape):
+    if shape == "circle":
+        for cont in contlist:
+            cX, cY, r = findCenterContour(cont)
+            pointlist.append([cX, cY, r])
+
+    elif shape == "edge":
+        for cont in contlist:
+            cX, cY, r = findEdgePointsObst(cont)
+            pointlist.append([cX, cY, r])
 
 def getDistance(x1, y1, x2, y2):
     distance = (((x1-x2)**2 + (y1-y2)**2)**0.5)/scale
@@ -122,15 +125,11 @@ def defineMyTurn(imgBoard):          # EDIT THIS PART FOR THE PUCK NEXT TO BOARD
 motionDetected = 0
 START = 1
 targetCenterRadius = []
-     
-while True:
-    frameCounter += 1
-    if frameCounter == cap.get(cv2.CAP_PROP_FRAME_COUNT):
-        frameCounter = 0 
-        cap.set(cv2.CAP_PROP_POS_FRAMES,0)
+colorFinder = ColorFinder(False) # To Decide HSV values of objects "True"
 
+while True:
     success, img = cap.read()
-    img = cv2.resize(img, (0, 0), fx = 0.5, fy = 0.5) # For video3.py
+    # img = cv2.resize(img, (0, 0), fx = 0.5, fy = 0.5) # For video3.py
     imgBoard = getBoard(img)
 
     maskTarget = createHsvMask(imgBoard, hsvTargetVals)
@@ -171,9 +170,9 @@ while True:
         Puck1CenterRadius  = []
         Puck2CenterRadius  = []
         
-        getPointArrays(contPuck1,Puck1CenterRadius)
-        getPointArrays(contPuck2,Puck2CenterRadius)
-        getPointArrays(contObstac,obstacleEdgePoints)
+        getPointArrays(contPuck1,Puck1CenterRadius,"circle")
+        getPointArrays(contPuck2,Puck2CenterRadius,"circle")
+        getPointArrays(contObstac,obstacleEdgePoints,"edge")
         
         maskFirstFrame = getFirstFrame(imgBoard)
         myTurn = 0
@@ -187,10 +186,10 @@ while True:
         print("target", str(targetCenterRadius))
         print("obstac", str(obstacleEdgePoints))
 
-        # cv2.imshow("maskPuck1",maskPuck1)
-        # cv2.imshow("maskPuck2",maskPuck2)
-        # cv2.imshow("maskTarget",maskTarget)
-        # cv2.imshow("maskObst",maskObst)
+        cv2.imshow("maskPuck1",maskPuck1)
+        cv2.imshow("maskPuck2",maskPuck2)
+        cv2.imshow("maskTarget",maskTarget)
+        cv2.imshow("maskObst",maskObst)
 
         # time.sleep(1)
         # WAIT UNTIL ROBOT SAYS "MISSION COMPLETED"
