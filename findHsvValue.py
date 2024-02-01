@@ -37,7 +37,7 @@ while True:
     imgColor, mask = colorFinder.update(imgBoard)
 
     cv2.imshow("ImageColor",imgColor)
-    cv2.imshow("Image",img)
+    # cv2.imshow("Image",img)
 
     # cv2.imwrite("img.png",imgColor)
     # mm=cv2.imread('img.png')

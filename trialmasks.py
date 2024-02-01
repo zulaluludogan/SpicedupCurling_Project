@@ -11,9 +11,9 @@ colorFinder = ColorFinder(False) # To Decide HSV values of objects "True"
 ## BOARD HSV ###
 
 hsvTargetVals = {'hmin': 0, 'smin': 28, 'vmin': 0, 'hmax': 19, 'smax': 255, 'vmax': 255}
-hsvPuck1Vals = {'hmin': 63, 'smin': 4, 'vmin': 163, 'hmax': 120, 'smax': 75, 'vmax': 255} # WHITE
-hsvPuck2Vals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 98} #PURPLE
-hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 98} # CAMERA NORMAL
+hsvPuck1Vals = {'hmin': 65, 'smin': 11, 'vmin': 203, 'hmax': 179, 'smax': 104, 'vmax': 255} # WHITE
+hsvPuck2Vals = {'hmin': 0, 'smin': 70, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 133}# BLACK
+hsvObstacleVals = {'hmin': 0, 'smin': 84, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 83} # CAMERA NORMAL
 # hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 156, 'smax': 255, 'vmax': 124} # CAMERA aNORMAL
 
 # cornerPoints = [[58,129],[579,121],[62,448],[590,430]]  # board
@@ -21,7 +21,7 @@ hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 179, 'smax': 255, '
 def getBoard(img):
     global scale
     scale = 1
-    bw, bh = 1110, 660
+    bw, bh = 1110, 680
     width, height = int(bw*scale),int(bh*scale)  # A4 paper size will be changed for the board size (height = 600 mm) width 1110mm
     
     maskObst = createHsvMask(img, hsvObstacleVals)
@@ -35,7 +35,7 @@ def getBoard(img):
     right_upper = [np.max(obstacleEdgePoints[:, 2, 0]), np.max(obstacleEdgePoints[:, 2, 1])]
     left_lower = [np.min(obstacleEdgePoints[:, 0, 0]), np.min(obstacleEdgePoints[:, 0, 1])]
     right_lower = [np.max(obstacleEdgePoints[:, 1, 0]), np.min(obstacleEdgePoints[:, 1, 1])]
-    cornerPoints=[left_upper, right_upper, left_lower, right_lower ]
+    cornerPoints=[[left_upper[0],left_upper[1]+10],[right_upper[0],right_upper[1]+10] ,[left_lower[0],left_lower[1]-10] ,[right_lower[0],right_lower[1]-10]]  
 
     pts1 =  np.float32(cornerPoints)
     pts2 =  np.float32([[0,0],[width,0],[0,height],[width,height]])
@@ -58,7 +58,7 @@ def detectCircle(img, minRad,maxRad, hsvVals):
     else:
         maskCircle = createHsvMask(img, hsvVals)
     img_gray = cv2.medianBlur(maskCircle,5)
-    circles = cv2.HoughCircles(img_gray,cv2.HOUGH_GRADIENT,1.5,20, param1=50,param2=30,minRadius = minRad,maxRadius = maxRad)
+    circles = cv2.HoughCircles(img_gray,cv2.HOUGH_GRADIENT,1.6,20, param1=50,param2=30,minRadius = minRad,maxRadius = maxRad)
     try:
         circles = np.uint16(np.around(circles))
         for i in circles[0,:]:
@@ -78,7 +78,7 @@ def createHsvMask(img,hsvVals):
     kernel = np.ones((5,5), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  # Difference btw dilation and erosion
     mask = cv2.medianBlur(mask, 9)
-    mask = cv2.dilate(mask, kernel, iterations=2)          # Increase white region
+    mask = cv2.dilate(mask, kernel, iterations=3)          # Increase white region
     kernel = np.ones((9,9), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel) 
     mask = cv2.erode(mask, kernel, iterations=1)
@@ -96,9 +96,10 @@ def findEdgePointsObst(cnt):
     box = cv2.boxPoints(rect)
     box = np.int0(box)
 
-    cv2.drawContours(imgBoarder, [box], 0, (0,0,255), 2)
-
-    return [[int(box[0][0]),int(box[0][1])], [int(box[1][0]),int(box[1][1])],[int(box[2][0]),int(box[2][1])],[int(box[3][0]),int(box[3][1])]]
+    # cv2.drawContours(imgBoarder, [box], 0, (255,255,255), 2)
+    
+    # return [[int(box[0][0]),int(box[0][1])], [int(box[1][0]),int(box[1][1])],[int(box[2][0]),int(box[2][1])],[int(box[3][0]),int(box[3][1])]]
+    return box 
 
 def getPointArrays(contlist,pointlist, shape):
     if shape == "circle":
@@ -109,13 +110,13 @@ def getPointArrays(contlist,pointlist, shape):
     elif shape == "edge":
         for cont in contlist:
             pts= findEdgePointsObst(cont)
-            # print("Distance")
-            # print(getDistance(pts[0][0], pts[0][1], pts[1][0], pts[1][1]))
-            if getDistance(pts[0][0], pts[0][1], pts[1][0], pts[1][1]) > 50:
-                # print(getDistance(pts[0][0], pts[0][1], pts[1][0], pts[1][1]))
-                
+            pts= findEdgePointsObst(cont)  
+            area = 0.5 * abs(pts[0][0]*pts[1][1] + pts[1][0]*pts[2][1] + pts[2][0]*pts[3][1] + pts[3][0]*pts[0][1]- pts[1][0]*pts[0][1] - pts[2][0]*pts[1][1] - pts[3][0]*pts[2][1] - pts[0][0]*pts[3][1])
+            # print("area")
+            # print(area)
+            if area > 1000:
                 pointlist.append(pts)
-            # cv2.drawContours(imgBoarder, [pointlist], 0, (0,0,255), 2)
+        cv2.drawContours(imgBoarder, pointlist, -1, (0, 0, 255), 2)
 
 START = 1
 
@@ -132,27 +133,26 @@ while True:
     maskPuck1 = createHsvMask(imgBoard, hsvPuck1Vals)
     maskPuck2 = createHsvMask(imgBoard, hsvPuck2Vals)
 
-    contTarget, numberofTarget =  detectContour(maskTarget)
+    # contTarget, numberofTarget =  detectContour(maskTarget)
     contObstac, numberofObstac =  detectContour(maskObst)
     contPuck1, numberofPunks1 =  detectContour(maskPuck1)
     contPuck2, numberofPunks2 =  detectContour(maskPuck2)
     
-
     obstacleEdgePoints = []
   
     getPointArrays(contObstac,obstacleEdgePoints,"edge")
     
     Puck1CenterRadius = detectCircle(imgBoard, 10, 40, hsvPuck1Vals)
-    Puck2CenterRadius = detectCircle(imgBoard, 5, 30, hsvObstacleVals)
-    targetCenterRadius = detectCircle(imgBoard, 50, 70, 0)
+    Puck2CenterRadius = detectCircle(imgBoard, 1, 30, hsvObstacleVals)
+    targetCenterRadius = detectCircle(imgBoard, 50, 60, 0)
 
     print("obstac", str(obstacleEdgePoints))
     # cv2.imshow("ImgBoard", imgBoard)
     cv2.imshow("imgBoarder", imgBoarder)
 
 
-    # cv2.imshow("maskPuck1",maskPuck1)
-    # cv2.imshow("maskPuck2",maskPuck2)
+    cv2.imshow("maskPuck1",maskPuck1)
+    cv2.imshow("maskPuck2",maskPuck2)
     # cv2.imshow("maskTarget",maskTarget)
     # cv2.imshow("maskObst", maskObst)
     print("Number of Contours Puck1 = " + str(len(Puck1CenterRadius)))
@@ -176,3 +176,11 @@ while True:
         break
 
 cv2.destroyAllWindows()
+
+# obstac [array([[   0,  630],
+#        [1095,  630],
+#        [1095,  659],
+#        [   0,  659]]), array([[   0,    0],
+#        [1109,    0],
+#        [1109,   27],
+#        [   0,   27]])]
