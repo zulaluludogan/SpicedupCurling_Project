@@ -10,10 +10,11 @@ colorFinder = ColorFinder(False) # To Decide HSV values of objects "True"
 
 ## BOARD HSV ###
 
-hsvTargetVals = {'hmin': 0, 'smin': 28, 'vmin': 0, 'hmax': 19, 'smax': 255, 'vmax': 255}
-hsvPuck1Vals = {'hmin': 65, 'smin': 11, 'vmin': 203, 'hmax': 179, 'smax': 104, 'vmax': 255} # WHITE
-hsvPuck2Vals = {'hmin': 0, 'smin': 70, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 133}# BLACK
-hsvObstacleVals = {'hmin': 0, 'smin': 84, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 83} # CAMERA NORMAL
+hsvTargetVals = {'hmin': 118, 'smin': 47, 'vmin': 0, 'hmax': 179, 'smax': 255, 'vmax': 255}
+hsvPuck1Vals = {'hmin': 76, 'smin': 0, 'vmin': 217, 'hmax': 179, 'smax': 41, 'vmax': 255} # WHITE
+hsvPuck2Vals = {'hmin': 21, 'smin': 51, 'vmin': 0, 'hmax': 171, 'smax': 255, 'vmax': 95} # BLACK
+hsvObstacleVals ={'hmin': 15, 'smin': 71, 'vmin': 0, 'hmax': 159, 'smax': 255, 'vmax': 122}# CAMERA NORMAL
+hsvBluePuck = {'hmin': 87, 'smin': 73, 'vmin': 217, 'hmax': 104, 'smax': 255, 'vmax': 255} # blue
 # hsvObstacleVals = {'hmin': 0, 'smin': 73, 'vmin': 0, 'hmax': 156, 'smax': 255, 'vmax': 124} # CAMERA aNORMAL
 
 # cornerPoints = [[58,129],[579,121],[62,448],[590,430]]  # board
@@ -22,20 +23,21 @@ def getBoard(img):
     global scale
     scale = 1
     bw, bh = 1110, 680
-    width, height = int(bw*scale),int(bh*scale)  # A4 paper size will be changed for the board size (height = 600 mm) width 1110mm
+    width, height = int(bw*scale),int(bh*scale)  #  the board size (height = 600 mm) width 1110mm
     
     maskObst = createHsvMask(img, hsvObstacleVals)
-    contObstac, numberofObstac =  detectContour(maskObst)
+    contObstac =  detectContour(maskObst)
     obstacleEdgePoints = []
 
-    getPointArrays(contObstac,obstacleEdgePoints,"edge")
+    getPointArrays(contObstac,obstacleEdgePoints)
     obstacleEdgePoints = np.array(obstacleEdgePoints)
 
-    left_upper = [np.min(obstacleEdgePoints[:, :, 0]), np.max(obstacleEdgePoints[:, :, 1])]
-    right_upper = [np.max(obstacleEdgePoints[:, 2, 0]), np.max(obstacleEdgePoints[:, 2, 1])]
-    left_lower = [np.min(obstacleEdgePoints[:, 0, 0]), np.min(obstacleEdgePoints[:, 0, 1])]
-    right_lower = [np.max(obstacleEdgePoints[:, 1, 0]), np.min(obstacleEdgePoints[:, 1, 1])]
-    cornerPoints=[[left_upper[0],left_upper[1]+10],[right_upper[0],right_upper[1]+10] ,[left_lower[0],left_lower[1]-10] ,[right_lower[0],right_lower[1]-10]]  
+    left_upper = [np.min(obstacleEdgePoints[:, 0, 0]), np.min(obstacleEdgePoints[:, 0, 1])]
+    left_lower = [np.min(obstacleEdgePoints[:, :, 0]), np.max(obstacleEdgePoints[:, :, 1])]
+    right_upper = [np.max(obstacleEdgePoints[:, 1, 0]), np.min(obstacleEdgePoints[:, 1, 1])]
+    right_lower = [np.max(obstacleEdgePoints[:, 2, 0]), np.max(obstacleEdgePoints[:, 2, 1])]
+    
+    cornerPoints=[[left_upper[0],left_upper[1]-10],[right_upper[0],right_upper[1]-10] ,[left_lower[0],left_lower[1]+10] ,[right_lower[0],right_lower[1]+10]]  
 
     pts1 =  np.float32(cornerPoints)
     pts2 =  np.float32([[0,0],[width,0],[0,height],[width,height]])
@@ -63,9 +65,9 @@ def detectCircle(img, minRad,maxRad, hsvVals):
         circles = np.uint16(np.around(circles))
         for i in circles[0,:]:
             cv2.circle(imgBoarder,(i[0],i[1]),i[2],(0,255,0),2)  # draw the outer circle
-            cv2.circle(imgBoarder,(i[0],i[1]),2,(0,255,0),3) # draw the center of the circle
+            cv2.circle(imgBoarder,(i[0],i[1]),2,(0,255,0),3)     # draw the center of the circle
             circleArray.append([i[0],i[1],i[2]])
-        print("circle detected:",str(len(circles[0,:])))
+        # print("circle detected:",str(len(circles[0,:])))
         cv2.imshow('imgBoarder',imgBoarder)
     except:
         pass
@@ -89,34 +91,27 @@ def detectContour(mask):
     contours, _ = cv2.findContours(mask,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # cv2.CHAIN_APPROX_SIMPLE -> 4 points | cv2.CHAIN_APPROX_NONE -> all boundary points
     numberofObjects = len(contours)
 
-    return contours, numberofObjects 
+    return contours
 
 def findEdgePointsObst(cnt):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
 
-    # cv2.drawContours(imgBoarder, [box], 0, (255,255,255), 2)
-    
+    # cv2.drawContours(imgBoarder, [box], 0, (255,255,255), 2)    
     # return [[int(box[0][0]),int(box[0][1])], [int(box[1][0]),int(box[1][1])],[int(box[2][0]),int(box[2][1])],[int(box[3][0]),int(box[3][1])]]
     return box 
 
-def getPointArrays(contlist,pointlist, shape):
-    if shape == "circle":
-        for cont in contlist:
-            cX, cY, r = detectCircle(imgBoard, 10, 40, hsvPuck1Vals)
-            pointlist.append([cX, cY, r])
-
-    elif shape == "edge":
-        for cont in contlist:
-            pts= findEdgePointsObst(cont)
-            pts= findEdgePointsObst(cont)  
-            area = 0.5 * abs(pts[0][0]*pts[1][1] + pts[1][0]*pts[2][1] + pts[2][0]*pts[3][1] + pts[3][0]*pts[0][1]- pts[1][0]*pts[0][1] - pts[2][0]*pts[1][1] - pts[3][0]*pts[2][1] - pts[0][0]*pts[3][1])
-            # print("area")
-            # print(area)
-            if area > 1000:
-                pointlist.append(pts)
-        cv2.drawContours(imgBoarder, pointlist, -1, (0, 0, 255), 2)
+def getPointArrays(contlist,pointlist):
+    for cont in contlist:
+        pts= findEdgePointsObst(cont)
+        pts= findEdgePointsObst(cont)  
+        area = 0.5 * abs(pts[0][0]*pts[1][1] + pts[1][0]*pts[2][1] + pts[2][0]*pts[3][1] + pts[3][0]*pts[0][1]- pts[1][0]*pts[0][1] - pts[2][0]*pts[1][1] - pts[3][0]*pts[2][1] - pts[0][0]*pts[3][1])
+        # print("area")
+        # print(area)
+        if area > 1000:
+            pointlist.append(pts)
+    cv2.drawContours(imgBoarder, pointlist, -1, (0, 0, 255), 2)
 
 START = 1
 
@@ -128,22 +123,23 @@ while True:
     # cv2.imshow("imgBoardInner", imgBoardInner)
     imgBoarder = imgBoard.copy()
     
-    maskTarget = createHsvMask(imgBoard, hsvTargetVals)
+    # maskTarget = createHsvMask(imgBoard, hsvTargetVals)
     maskObst = createHsvMask(imgBoard, hsvObstacleVals)
-    maskPuck1 = createHsvMask(imgBoard, hsvPuck1Vals)
-    maskPuck2 = createHsvMask(imgBoard, hsvPuck2Vals)
+    # maskPuck1 = createHsvMask(imgBoard, hsvPuck1Vals)
+    # maskPuck2 = createHsvMask(imgBoard, hsvPuck2Vals)
 
-    # contTarget, numberofTarget =  detectContour(maskTarget)
-    contObstac, numberofObstac =  detectContour(maskObst)
-    contPuck1, numberofPunks1 =  detectContour(maskPuck1)
-    contPuck2, numberofPunks2 =  detectContour(maskPuck2)
+    # contTarget,  =  detectContour(maskTarget)
+    contObstac =  detectContour(maskObst)
+    # contPuck1 =  detectContour(maskPuck1)
+    # contPuck2 =  detectContour(maskPuck2)
     
     obstacleEdgePoints = []
   
-    getPointArrays(contObstac,obstacleEdgePoints,"edge")
+    getPointArrays(contObstac,obstacleEdgePoints)
     
     Puck1CenterRadius = detectCircle(imgBoard, 10, 40, hsvPuck1Vals)
-    Puck2CenterRadius = detectCircle(imgBoard, 1, 30, hsvObstacleVals)
+    Puck2CenterRadius = detectCircle(imgBoard, 1, 50, hsvObstacleVals)
+    PuckBCenterRadius = detectCircle(imgBoard, 1, 30, hsvBluePuck)
     targetCenterRadius = detectCircle(imgBoard, 50, 60, 0)
 
     print("obstac", str(obstacleEdgePoints))
@@ -151,21 +147,19 @@ while True:
     cv2.imshow("imgBoarder", imgBoarder)
 
 
-    cv2.imshow("maskPuck1",maskPuck1)
-    cv2.imshow("maskPuck2",maskPuck2)
+    # cv2.imshow("maskPuck1",maskPuck1)
+    # cv2.imshow("maskPuck2",maskPuck2)
     # cv2.imshow("maskTarget",maskTarget)
-    # cv2.imshow("maskObst", maskObst)
-    print("Number of Contours Puck1 = " + str(len(Puck1CenterRadius)))
-    print("Number of Contours Puck2 = " + str(len(Puck2CenterRadius)))
-    print("Number of Contours Target = " + str(len(targetCenterRadius))) 
-    print("Number of Contours Obstacles = " + str(len(obstacleEdgePoints)))
+    cv2.imshow("maskObst", maskObst)
 
-    # print("Number of Contours Puck1 = " + str(numberofPunks1))
-    # print("Number of Contours Puck2 = " + str(numberofPunks2))
-    # print("Number of Contours Target = " + str(numberofTarget)) 
-    # print("Number of Contours Obstacles = " + str(numberofObstac))
+    print("Number of  Puck1 = " + str(len(Puck1CenterRadius)))
+    print("Number of  Puck2 = " + str(len(Puck2CenterRadius)))
+    print("Number of  BLUE PUCK= " + str(len(PuckBCenterRadius)))
+    print("Number of  Target = " + str(len(targetCenterRadius))) 
+    print("Number of  Obstacles = " + str(len(obstacleEdgePoints)))
 
-    # cv2.imshow("Image",img)
+    
+    cv2.imshow("Image",img)
     # cv2.imshow("imgBoard",imgBoard)
     # cv2.imwrite("img.png",imgColor)
     # mm=cv2.imread('img.png')
@@ -177,10 +171,3 @@ while True:
 
 cv2.destroyAllWindows()
 
-# obstac [array([[   0,  630],
-#        [1095,  630],
-#        [1095,  659],
-#        [   0,  659]]), array([[   0,    0],
-#        [1109,    0],
-#        [1109,   27],
-#        [   0,   27]])]
