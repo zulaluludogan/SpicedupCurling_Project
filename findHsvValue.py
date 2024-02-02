@@ -27,7 +27,6 @@ while True:
     #     cap.set(cv2.CAP_PROP_POS_FRAMES,0)
 
     success, img = cap.read()
-    # img = cv2.resize(img, (0, 0), fx = 0.5, fy = 0.5)
     # imgBoard = getBoard(img)
     imgBoard = img
 
@@ -42,7 +41,7 @@ while True:
     # cv2.imwrite("img.png",imgColor)
     # mm=cv2.imread('img.png')
     # cv2.imshow("hee",mm)
-    
+
     cv2.waitKey(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
